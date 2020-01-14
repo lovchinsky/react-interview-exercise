@@ -1,50 +1,80 @@
 import React from "react";
-import { Link } from "react-router-dom";
+import { useParams } from "react-router";
+import { MdErrorOutline } from "react-icons/md";
 import {
+  CircularProgress,
   Grid,
-  IconButton, Typography
-} from "@material-ui/core";
-import { MdFileDownload } from "react-icons/md";
+  Paper,
+  Typography,
+  makeStyles
+} from "@material-ui/core"
 
 import Layout from "../components/layout";
+import ImageDetails from "../components/imageDetails/imageDetails";
+import ImageZoomDialog from "../components/imageZoomDialog/imageZoomDialog";
+import RelatedImages from "../components/relatedImages/relatedImages";
+import useImageDetails from "../hooks/useImageDetails";
+
+const useStyles = makeStyles(({ spacing }) => ({
+  paperError: {
+    display: "flex",
+    alignItems: "center",
+    padding: `${spacing(1)}px ${spacing(2)}px`,
+    color: "rgb(97, 26, 21)",
+    backgroundColor: "rgb(253, 236, 234)"
+  },
+  iconError: {
+    color: "#f44336",
+    marginRight: spacing(1)
+  }
+}));
 
 const ImagePage = () => {
+  const { id } = useParams();
+  const { imageDetails, isLoading, error } = useImageDetails(id);
+  const [openImageDialog, setOpenImageDialog] = React.useState(false);
+  const classes = useStyles();
+
+  const handleImageClick = React.useCallback(() => {
+    setOpenImageDialog(true);
+  }, []);
+
+  const handleImageDialogClose = React.useCallback(() => {
+    setOpenImageDialog(false);
+  }, []);
+
   return (
     <Layout>
-      <Grid container spacing={2} justify="center">
-        <Grid item xs={12}>
-          <Grid container justify="center">
-            <Grid item>
-              <IconButton>
-                <MdFileDownload />
-              </IconButton>
-            </Grid>
+      {isLoading && (
+        <Grid container spacing={2} justify="center">
+          <Grid item>
+            <CircularProgress/>
           </Grid>
         </Grid>
-        <Grid item xs={8}>
-          <img width="100%" src="https://images.pexels.com/photos/45201/kitty-cat-kitten-pet-45201.jpeg?auto=compress&cs=tinysrgb&dpr=1&w=500" alt=""/>
+      )}
+      {imageDetails && (
+        <>
+          <ImageDetails imageDetails={imageDetails} onImageClick={handleImageClick}/>
+          <ImageZoomDialog
+            src={imageDetails.download_url}
+            alt={imageDetails.author}
+            width={imageDetails.width}
+            height={imageDetails.height}
+            open={openImageDialog}
+            onClose={handleImageDialogClose}/>
+          <RelatedImages/>
+        </>
+      )}
+      {error && (
+        <Grid container spacing={2} justify="center">
+          <Grid item>
+            <Paper className={classes.paperError}>
+              <MdErrorOutline className={classes.iconError}/>
+              <Typography>{error.message}</Typography>
+            </Paper>
+          </Grid>
         </Grid>
-      </Grid>
-      <div>
-        <Typography variant="h5">Related images</Typography>
-        <Grid container spacing={2} justify="space-between">
-          <Grid item>
-            <Link to="/image/0">First</Link>
-          </Grid>
-          <Grid item>
-            <Link to="/image/1">Second</Link>
-          </Grid>
-          <Grid item>
-            <Link to="/image/2">Third</Link>
-          </Grid>
-          <Grid item>
-            <Link to="/image/3">Fourth</Link>
-          </Grid>
-          <Grid item>
-            <Link to="/image/4">Fifth</Link>
-          </Grid>
-        </Grid>
-      </div>
+      )}
     </Layout>
   );
 };
