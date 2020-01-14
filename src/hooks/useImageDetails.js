@@ -32,6 +32,8 @@ const reducer = (state, action) => {
         isLoading: false,
         error: payload
       };
+    default:
+      throw new Error(`Unexpected action type: ${type}`);
   }
 };
 

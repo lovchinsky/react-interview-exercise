@@ -1,19 +1,13 @@
 import React from "react";
-import { Link } from "react-router-dom";
-import { MdFavorite } from "react-icons/md";
 import {
   Grid,
-  Card,
-  CardHeader,
-  CardMedia,
-  CardActions,
   CircularProgress,
-  Button,
   Snackbar
 } from "@material-ui/core";
 
 import Layout from "../components/layout";
 import InfiniteScrollLoader from "../components/infiniteScrollLoader";
+import ImageCard from "../components/imageCard/imageCard";
 import { getListImages } from "../images";
 
 const DEFAULT_IMAGES_PAGE = 1;
@@ -25,7 +19,8 @@ class Homepage extends React.Component {
     isLoading: true,
     hasMore: true,
     page: 0,
-    error: null
+    error: null,
+    favorites: {}
   };
 
   loadImages = (page, limit = DEFAULT_IMAGES_LIMIT) => {
@@ -65,12 +60,31 @@ class Homepage extends React.Component {
     });
   };
 
+  handleFavoriteClick = (id) => {
+    this.setState(({ favorites }) => {
+      const { [id]: hasId, ...rest } = favorites;
+
+      if (hasId) {
+        return {
+          favorites: rest
+        };
+      }
+
+      return {
+        favorites: {
+          [id]: true,
+          ...favorites
+        }
+      }
+    });
+  };
+
   componentDidMount() {
     this.loadImages(DEFAULT_IMAGES_PAGE);
   }
 
   render() {
-    const { images, isLoading, hasMore, error } = this.state;
+    const { images, isLoading, hasMore, error, favorites } = this.state;
     const hasError = error !== null;
     return (
       <Layout>
@@ -89,28 +103,15 @@ class Homepage extends React.Component {
         >
           {images.length > 0 && (
             <Grid container spacing={2}>
-              {images.map(({id, author, download_url}) => {
-                const imageLink = `/image/${id}`;
-                return (
-                  <Grid key={id} item xs={12} md={6} lg={4}>
-                    <Card>
-                      <CardHeader title={<Link to={imageLink}>{author}</Link>} />
-                      <Link to={imageLink}>
-                        <CardMedia
-                          style={{ paddingTop: '56.25%' }}
-                          image={download_url}
-                          title={author}
-                        />
-                      </Link>
-                      <CardActions disableSpacing>
-                        <Button>
-                          <MdFavorite/> 0
-                        </Button>
-                      </CardActions>
-                    </Card>
-                  </Grid>
-                );
-              })}
+              {images.map(({id, author, download_url}) => (
+                <ImageCard
+                  key={id}
+                  id={id}
+                  author={author}
+                  download_url={download_url}
+                  isFavorite={Boolean(favorites[id])}
+                  onFavoriteClick={this.handleFavoriteClick}/>
+              ))}
             </Grid>
           )}
         </InfiniteScrollLoader>
